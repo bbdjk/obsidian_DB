@@ -10,21 +10,38 @@
     body { margin:0; font-family:'Pretendard', sans-serif; background:var(--bg); color:var(--txt); display:flex; height:100vh; overflow:hidden; }
     
     /* 사이드바 */
-    #sidebar { width:280px; background:var(--surf); border-right:1px solid #333; display:flex; flex-direction:column; flex-shrink:0; }
+    #sidebar { width:280px; background:var(--surf); border-right:1px solid #333; display:flex; flex-direction:column; flex-shrink:0; user-select: none; }
     .search-area { padding:20px; border-bottom:1px solid #333; }
     .search-area input { width:100%; padding:10px; background:#000; border:1px solid #444; color:#fff; border-radius:6px; box-sizing:border-box; }
     #nav { flex:1; overflow-y:auto; padding:10px; }
     
-    .cat-title { font-size:0.8rem; color:#888; margin:20px 0 5px 10px; font-weight:bold; }
-    .nav-item { padding:10px 15px; cursor:pointer; border-radius:6px; margin-bottom:4px; font-size:0.95rem; }
-    .nav-item:hover { background:#333; }
-    .nav-item.active { background:#333; border-left:4px solid var(--pri); font-weight:bold; }
+    /* [NEW] 접기/펼치기 스타일 */
+    .cat-group { margin-bottom: 5px; }
+    .cat-header { 
+        font-size:0.85rem; color:#888; padding: 12px 10px; 
+        font-weight:bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        border-radius: 6px; transition: 0.2s;
+    }
+    .cat-header:hover { background: #2a2a2a; color: #fff; }
+    .cat-header .arrow { font-size: 0.7rem; transition: transform 0.2s; }
     
-    /* 세력별 색상 */
-    .nav-item.rdl { border-left-color:var(--rdl); }
-    .nav-item.un { border-left-color:var(--un); }
-    .nav-item.gof { border-left-color:var(--gof); }
-    .nav-item.pd { border-left-color:var(--pd); }
+    /* 그룹이 열렸을 때 화살표 회전 */
+    .cat-group.open .cat-header .arrow { transform: rotate(90deg); }
+    .cat-group.open .cat-header { color: var(--pri); }
+
+    /* 리스트 컨테이너 (기본 숨김) */
+    .nav-list { display: none; padding-left: 10px; border-left: 2px solid #333; margin-left: 10px; margin-top: 5px; }
+    .cat-group.open .nav-list { display: block; }
+
+    .nav-item { padding:8px 12px; cursor:pointer; border-radius:6px; margin-bottom:2px; font-size:0.9rem; color:#bbb; }
+    .nav-item:hover { background:#333; color: #fff; }
+    .nav-item.active { background:#333; color: #fff; border-right: 3px solid var(--pri); }
+    
+    /* 세력별 포인트 컬러 (아이템) */
+    .nav-item.rdl { color:var(--rdl); }
+    .nav-item.un { color:var(--un); }
+    .nav-item.gof { color:var(--gof); }
+    .nav-item.pd { color:var(--pd); }
 
     /* 메인 컨텐츠 */
     #main { flex:1; padding:40px; overflow-y:auto; }
@@ -40,20 +57,26 @@
     .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(80px, 1fr)); gap:15px; margin-bottom:30px; background:#181818; padding:20px; border-radius:8px; }
     .stat-item { text-align:center; }
     .stat-val { font-size:1.2rem; font-weight:bold; color:#fff; }
-    .detail-block h3 { color:#fff; margin-bottom:5px; }
+    .detail-block h3 { color:#fff; margin-bottom:5px; margin-top: 20px;}
     .detail-block p { color:#ccc; line-height:1.6; margin-top:0;}
+    
+    /* 스크롤바 디자인 */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #121212; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <div class="search-area"><input type="text" id="searchInput" placeholder="검색..."></div>
+    <div class="search-area"><input type="text" id="searchInput" placeholder="검색 (유닛, 룰)..."></div>
     <div id="nav"></div>
 </div>
 <div id="main">
     <div style="text-align:center; margin-top:20vh; opacity:0.5;">
         <h1>EMBER DATABASE</h1>
-        <p>좌측 메뉴에서 항목을 선택하세요.</p>
+        <p>왼쪽 목록에서 항목을 선택하세요.</p>
     </div>
 </div>
 
@@ -64,7 +87,7 @@
 <script src="db_pd.js"></script>
 
 <script>
-    // 1. 모든 데이터 파일 합치기
+    // 1. 데이터 통합
     const DATABASE = [
         ...(typeof DATA_RULE !== 'undefined' ? DATA_RULE : []),
         ...(typeof DATA_RDL  !== 'undefined' ? DATA_RDL  : []),
@@ -76,27 +99,59 @@
     const nav = document.getElementById('nav');
     const main = document.getElementById('main');
 
-    // 2. 목록 렌더링
-    function renderNav(list) {
+    // 2. [NEW] 네비게이션 렌더링 (접기/펼치기 적용)
+    function renderNav(list, isSearch = false) {
         nav.innerHTML = '';
-        let lastCat = '';
+        
+        // 카테고리별로 데이터 묶기
+        const grouped = {};
         list.forEach(item => {
-            if(item.cat !== lastCat) {
-                const title = document.createElement('div');
-                title.className = 'cat-title';
-                title.innerText = item.cat;
-                nav.appendChild(title);
-                lastCat = item.cat;
-            }
-            const el = document.createElement('div');
-            el.className = `nav-item ${item.color || ''}`;
-            el.innerText = item.title;
-            el.onclick = () => renderDetail(item);
-            nav.appendChild(el);
+            if(!grouped[item.cat]) grouped[item.cat] = [];
+            grouped[item.cat].push(item);
         });
+
+        // 그룹별 렌더링
+        for (const [catName, items] of Object.entries(grouped)) {
+            // 그룹 컨테이너
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'cat-group';
+            // 검색 중일 땐 기본적으로 다 펼쳐놓기
+            if(isSearch) groupDiv.classList.add('open');
+
+            // 헤더 (클릭 시 토글)
+            const header = document.createElement('div');
+            header.className = 'cat-header';
+            header.innerHTML = `<span>${catName}</span> <span class="arrow">▶</span>`;
+            header.onclick = () => {
+                groupDiv.classList.toggle('open');
+            };
+
+            // 아이템 리스트 컨테이너
+            const listDiv = document.createElement('div');
+            listDiv.className = 'nav-list';
+
+            // 아이템들 추가
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = `nav-item ${item.color || ''}`;
+                el.innerText = item.title;
+                el.onclick = (e) => {
+                    e.stopPropagation(); // 부모 클릭 방지
+                    renderDetail(item);
+                    // 활성 상태 표시
+                    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+                    el.classList.add('active');
+                };
+                listDiv.appendChild(el);
+            });
+
+            groupDiv.appendChild(header);
+            groupDiv.appendChild(listDiv);
+            nav.appendChild(groupDiv);
+        }
     }
 
-    // 3. 상세 내용 렌더링
+    // 3. 상세 내용 렌더링 (기존과 동일)
     function renderDetail(item) {
         let html = `<div class="card">`;
         html += `<div class="header-row">
@@ -114,22 +169,27 @@
         }
 
         if(item.data) { // FAQ 타입
-            item.data.forEach(d => html += `<div style="margin-bottom:15px; padding:10px; background:#252525; border-radius:5px;"><div style="color:#ffb74d; font-weight:bold;">Q. ${d.q}</div><div style="color:#ddd; margin-top:5px;">A. ${d.a}</div></div>`);
+            item.data.forEach(d => html += `<div style="margin-bottom:15px; padding:15px; background:#252525; border-radius:8px;"><div style="color:#ffb74d; font-weight:bold; margin-bottom:5px;">Q. ${d.q}</div><div style="color:#ddd; line-height:1.5;">A. ${d.a}</div></div>`);
         } else if(item.details) { // 유닛/미션 타입
             item.details.forEach(d => html += `<div class="detail-block"><h3>${d.h}</h3><p>${d.t}</p></div>`);
         }
         html += `</div>`;
         main.innerHTML = html;
+        if(window.innerWidth <= 768) main.scrollTop = 0;
     }
 
-    // 4. 검색 기능
+    // 4. 검색 기능 (검색 시 자동으로 펼쳐짐)
     document.getElementById('searchInput').addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
+        if(!term) {
+            renderNav(DATABASE, false); // 검색어 없으면 다 접힌 상태(기본)
+            return;
+        }
         const filtered = DATABASE.filter(i => JSON.stringify(i).toLowerCase().includes(term));
-        renderNav(filtered);
+        renderNav(filtered, true); // 검색 시 펼침 강제
     });
 
-    // 시작
+    // 초기 실행
     renderNav(DATABASE);
 </script>
 </body>
