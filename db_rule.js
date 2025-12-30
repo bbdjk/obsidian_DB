@@ -1,10 +1,10 @@
 const DATA_RULE = [
     // ==========================================
-    // 1. 게임 진행 (Game Flow)
+    // 1. Game Flow (게임 진행)
     // ==========================================
     {
-        id:'rule_flow', type:'rule', cat:'Game Flow', title:'🔄 라운드 진행 순서',
-        sub:'Round Sequence',
+        id:'rule_flow', type:'rule', cat:'Game', title:'🔄 [진행] 라운드 시퀀스',
+        sub:'Game Flow',
         details:[
             {h:'1. 커맨드 페이즈 (Command)', t:'선공부터 번갈아가며 메카의 [커맨드 토큰]을 드론에게 지시.<br>- 드론은 즉시 **이동** 또는 **커맨드 액션** 1회 수행.'},
             {h:'2. 플랜 페이즈 (Plan)', t:'모든 플레이어는 비밀리에 각 메카의 **타이밍 다이얼**을 설정.'},
@@ -15,8 +15,8 @@ const DATA_RULE = [
         ]
     },
     {
-        id:'rule_stance', type:'rule', cat:'Game Flow', title:'🛡️ 스탠스 (Stance)',
-        sub:'메카의 태세 전환',
+        id:'rule_stance', type:'rule', cat:'Game', title:'🛡️ [진행] 스탠스 (Stance)',
+        sub:'Game Flow',
         details:[
             {h:'공격 (OFF)', t:'**공격 강화**:<br>- 빈 강공격(🟥) → 강공격<br>- 빈 약공격(🟨) → 약공격으로 취급.'},
             {h:'방어 (DEF)', t:'**방어 강화**:<br>- 빈 방어(⬜) → 방어로 취급.'},
@@ -26,11 +26,11 @@ const DATA_RULE = [
     },
 
     // ==========================================
-    // 2. 핵심 전투 규칙 (Combat)
+    // 2. Combat (전투)
     // ==========================================
     {
-        id:'rule_combat', type:'rule', cat:'Combat', title:'⚔️ 전투 규칙',
-        sub:'공격 및 방어 절차',
+        id:'rule_combat', type:'rule', cat:'Game', title:'⚔️ [전투] 전투 규칙',
+        sub:'Combat',
         details:[
             {h:'1. 대상 지정', t:'사거리, 시야, 전방(사격/근접 시) 조건 확인.<br>- **부품 지정**: 공격자/방어자 능력에 따라 지정. (셧다운/후방 공격 시 공격자가 지정)'},
             {h:'2. 주사위 굴림', t:'- **공격자**: 무기 수치만큼 🟥/🟨 굴림.<br>- **방어자**: 장갑(또는 구조) 수치만큼 ⬜ 굴림. (회피/커버/패링 보너스 추가)'},
@@ -39,13 +39,24 @@ const DATA_RULE = [
             {h:'5. 연쇄 데미지', t:'관통 후 남은 데미지는 **[파열/산탄/절단]** 효과가 있다면 다른 부품으로 전이.'}
         ]
     },
+    {
+        id:'rule_dice', type:'rule', cat:'Game', title:'🎲 [전투] 주사위 종류',
+        sub:'Combat',
+        details:[
+            {h:'🟥 빨강 (강공격)', t:'주로 높은 데미지. (빈 강공격 포함)'},
+            {h:'🟨 노랑 (약공격)', t:'주로 연타/전자전. (빈 약공격 포함)'},
+            {h:'⬜ 하양 (방어)', t:'방어 및 내구도 판정. (빈 방어 포함)'},
+            {h:'🟦 파랑 (회피)', t:'회피 스탠스/패링 시 사용.'},
+            {h:'⬛ 검정 (부품)', t:'피격 부위 결정 (1~5: 부품, 6: 선택).'}
+        ]
+    },
 
     // ==========================================
-    // 3. 게임 용어 사전 (Glossary)
+    // 3. Game Terms (게임 용어)
     // ==========================================
     {
-        id:'rule_terms_damage', type:'rule', cat:'📚 게임 용어 (Glossary)', title:'💥 공격 및 데미지 용어',
-        sub:'특수 공격 효과',
+        id:'rule_terms_damage', type:'rule', cat:'Game', title:'💥 [용어] 공격 및 데미지',
+        sub:'Game Terms',
         details:[
             {h:'관통 (Penetration)', t:'방어 주사위로 상쇄되지 않고 남은 데미지가 1이라도 있으면 발생.<br>- 부품에 데미지를 입히거나 파괴합니다.'},
             {h:'장갑 관통 X (Pierce)', t:'방어자가 방어 주사위를 굴리기 **전**에, 하얀색 방어 주사위 X개를 강제로 제거합니다.'},
@@ -53,12 +64,12 @@ const DATA_RULE = [
             {h:'파열 (Blast)', t:'이 공격으로 발생한 데미지는 **구조(Structure)**에 직접 적용된 것으로 간주하며, 남은 데미지는 인접 부품으로 전이됩니다.'},
             {h:'절단 (Sever)', t:'하나의 부품에 데미지를 집중합니다. 관통 후 남은 데미지로 **동일한 부품**을 다시 공격할 수 있습니다.'},
             {h:'곡사 (Indirect Fire)', t:'목표물에 대한 시야(Line of Sight)가 없어도 공격할 수 있습니다.'},
-            {h:'무소음 (Silent)', t:'이 액션을 수행해도 [피탐(Detected)] 토큰을 획득하지 않습니다.'}
+            {h:'무소음 (Silent)', t:'이 액션을 수행해도 [Detected] 토큰을 획득하지 않습니다.'}
         ]
     },
     {
-        id:'rule_terms_cover', type:'rule', cat:'📚 게임 용어 (Glossary)', title:'🛡️ 커버 (Cover)',
-        sub:'방어 보너스 규칙',
+        id:'rule_terms_cover', type:'rule', cat:'Game', title:'🛡️ [용어] 커버 (Cover)',
+        sub:'Game Terms',
         details:[
             {h:'지형 커버 (Terrain Cover)', t:'공격자와 방어자 사이에 **지형(장애물)**이 시야를 일부 가릴 때 적용.<br>- 방어자는 **방어 주사위(⬜) 1개를 제거**당합니다. (주의: 커버는 방어자에게 불리하게 적용됨)'},
             {h:'유닛 커버 (Unit Cover)', t:'공격자와 방어자 사이에 **다른 유닛**이 시야를 일부 가릴 때 적용.<br>- 공격자는 **공격 주사위(🟥또는🟨) 1개를 제거**당합니다. (방어자에게 유리)'},
@@ -67,8 +78,8 @@ const DATA_RULE = [
         ]
     },
     {
-        id:'rule_terms_token', type:'rule', cat:'📚 게임 용어 (Glossary)', title:'⚠️ 토큰 (Tokens)',
-        sub:'상태 이상 및 표식',
+        id:'rule_terms_token', type:'rule', cat:'Game', title:'⚠️ [용어] 토큰 (Tokens)',
+        sub:'Game Terms',
         details:[
             {h:'🟦 손상 (Damaged)', t:'[삼각형] 구조 수치가 있는 부품이 관통되면 획득.<br>- 이후 방어 시 장갑(Armor) 대신 **구조(Structure) 수치**를 사용.<br>- 이 상태에서 다시 관통되면 **완전 파괴**.'},
             {h:'🟦 수리 (Repaired)', t:'[삼각형] 파괴된 부품을 긴급 수리한 상태.<br>- 사용 가능하지만, 피격 시 방어 굴림 없이 **즉시 파괴**.'},
@@ -83,11 +94,11 @@ const DATA_RULE = [
     },
 
     // ==========================================
-    // 4. 주요 키워드 (Keywords)
+    // 4. Keywords (키워드)
     // ==========================================
     {
-        id:'rule_keyword_move', type:'rule', cat:'Keywords', title:'🏃 이동 관련 키워드',
-        sub:'특수 이동 규칙',
+        id:'rule_keyword_move', type:'rule', cat:'Game', title:'🏃 [키워드] 이동 관련',
+        sub:'Keywords',
         details:[
             {h:'분쇄 (Trample)', t:'대형(3x3) 유닛이 소형/중형 유닛의 그리드로 이동 시 발동.<br>- 대상은 밀려나거나 파괴(이동 불가 유닛)됨.<br>- 취약 지형(컨테이너 등)은 즉시 파괴.'},
             {h:'락온 (Lock-on)', t:'인접한 적에게 근접 액션이 가능할 때 발동.<br>- 락온된 적은 **사격 불가**.<br>- 이동하여 이탈하려면 칸당 **이동력 1 추가 소모**.'},
@@ -95,8 +106,8 @@ const DATA_RULE = [
         ]
     },
     {
-        id:'rule_keyword_act', type:'rule', cat:'Keywords', title:'💥 액션 관련 키워드',
-        sub:'공격 및 방어 특성',
+        id:'rule_keyword_act', type:'rule', cat:'Game', title:'💥 [키워드] 액션 관련',
+        sub:'Keywords',
         details:[
             {h:'요격 (Intercept)', t:'사거리 내 적 고고도/발사체 이동 시 **자동 사격**.<br>- 락온 무시, 전방위 발동.'},
             {h:'광학 위장 (Optical Camo)', t:'적의 공격 대상이 되면 먼저 **탐지(Detection)**를 수행해야 함.<br>- 탐지 실패 시 공격 무효.<br>- 공격/이동 시 위장 해제될 수 있음 (노출 변위).'},
@@ -105,19 +116,19 @@ const DATA_RULE = [
     },
 
     // ==========================================
-    // 5. 기존 데이터 (미션/환경 - 유지)
+    // 5. Mission (미션)
     // ==========================================
     {
-        id:'mission_main', type:'mis', cat:'Mission', title:'🎯 메인 미션',
-        sub:'지휘관 암살 (Commander)',
+        id:'mission_main', type:'mis', cat:'Game', title:'🎯 [미션] 메인 미션',
+        sub:'Mission',
         details:[
             {h:'목표 설정', t:'자신의 메카 1기를 **[지휘관]** 지정.'},
             {h:'승리 조건', t:'1. 적 지휘관 파괴 시: **즉시 10점 승리**.<br>2. 생존 시: 파괴한 적 지휘관 부품당 3점.'}
         ]
     },
     {
-        id:'mission_sec', type:'mis', cat:'Mission', title:'🎖️ 세컨더리 미션',
-        sub:'선택 임무 (비공개 선택)',
+        id:'mission_sec', type:'mis', cat:'Game', title:'🎖️ [미션] 세컨더리 미션',
+        sub:'Mission',
         details:[
             {h:'참수', t:'[고가치 표적] 지정. 파괴 시 **5점**.'},
             {h:'현상금 사냥', t:'[현상금 대상] 지정. 파괴 시 **4점**.'},
@@ -125,8 +136,8 @@ const DATA_RULE = [
         ]
     },
     {
-        id:'env_cards', type:'env', cat:'Mission', title:'⚠️ 전장 환경 규칙',
-        sub:'지형 효과',
+        id:'env_cards', type:'env', cat:'Game', title:'⚠️ [미션] 전장 환경 규칙',
+        sub:'Mission',
         details:[
             {h:'심연', t:'진입 시 **즉시 파괴**.'},
             {h:'반중력', t:'이동 시작 시 **비행 이동** 취급.'}
