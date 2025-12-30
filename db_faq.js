@@ -1,7 +1,7 @@
 const DATA_FAQ = [
     { 
-        id:'faq_combat', type:'faq', cat:'FAQ', title:'⚔️ 전투 및 액션 (General)', 
-        desc:'전투 진행, 액션 판정, 토큰 상호작용 관련',
+        id:'faq_combat', type:'faq', cat:'FAQ', title:'⚔️ 전투 및 액션 (일반)', 
+        desc:'전투 진행, 액션 판정, 토큰 상호작용 등 공통 규칙입니다.',
         data:[
             {q:'[최신] 광학위장 상태에서 분쇄(Trample)가 가능한가요?', a:'**아니요, 불가능합니다.**'},
             {q:'[최신] LMG 충전 후 다중지정으로 지형 파괴가 가능한가요?', a:'네. **최대 3개의 지형**까지 동시에 지정하여 파괴할 수 있습니다.'},
@@ -48,8 +48,8 @@ const DATA_FAQ = [
         ]
     },
     { 
-        id:'faq_rdl', type:'faq', cat:'RDL', title:'🟥 재건개발연맹 (RDL)', 
-        desc:'RDL 유닛 및 장비 관련 FAQ',
+        id:'faq_rdl', type:'faq', cat:'FAQ', title:'🟥 FAQ - 재건개발연맹 (RDL)', 
+        desc:'RDL 유닛 및 장비 관련',
         data:[
             {q:'[최신] 광학위장 중인 유닛(예: 옥토퍼스)이 부위 파괴로 셧다운되면 위장이 풀리나요?', a:'아니요. **셧다운되어도 광학위장은 유지**됩니다. 단, 셧다운 상태에선 액션 발동이 안 되므로, 이후 위장이 해제될 때 **노출 변위(이동) 없이 제자리에 등장**합니다.'},
             {q:'비컨이 키홀의 증폭화 효과를 받을 수 있나요?', a:'아니요. 비컨은 설치된 순간 별개의 유닛이므로 불가능합니다.'},
@@ -70,8 +70,8 @@ const DATA_FAQ = [
         ]
     },
     { 
-        id:'faq_un', type:'faq', cat:'UN', title:'🟦 네트워크연합 (UN)', 
-        desc:'UN 유닛 및 장비 관련 FAQ',
+        id:'faq_un', type:'faq', cat:'FAQ', title:'🟦 FAQ - 네트워크연합 (UN)', 
+        desc:'UN 유닛 및 장비 관련',
         data:[
             {q:'[최신] 카타나의 [내려치기] 성공 후 남은 틱으로 [가르기]를 또 쓸 수 있나요?', a:'**네.** 액션 틱이 남아있다면 [가르기]를 사용할 수 있습니다.'},
             {q:'오버로딩팩으로 재부팅 직후 액션 틱을 늘릴 수 있나요?', a:'아니요. 재부팅 직후엔 링크가 1이라 불가능합니다.'},
@@ -90,7 +90,7 @@ const DATA_FAQ = [
         ]
     },
     { 
-        id:'faq_etc', type:'faq', cat:'Mercenary', title:'⬜ 용병 & 기타 팩션', 
+        id:'faq_etc', type:'faq', cat:'FAQ', title:'⬜ FAQ - 용병 & 기타', 
         desc:'플래닛링 다이나믹스, 화이트드워프 등',
         data:[
             {q:'[플래닛링] 리퍼 B, D 타입 [긴급 연막] 사거리는?', a:'**1**로 변경되었습니다.'},
@@ -106,7 +106,7 @@ const DATA_FAQ = [
         ]
     },
     { 
-        id:'faq_mission', type:'faq', cat:'Mission', title:'🚩 미션 & 캠페인', 
+        id:'faq_mission', type:'faq', cat:'FAQ', title:'🚩 FAQ - 미션 & 캠페인', 
         desc:'미션 진행 및 승리 조건 관련',
         data:[
             {q:'[한국 권장] 미션 진행 순서는?', a:'전장 선택 -> 선/후공 결정 -> 메인 미션 선택 -> 세컨더리(비공개) 선택 -> 유닛 배치 -> 세컨더리 공개 -> 미션 오브젝트 지정 -> 1라운드 시작'},
