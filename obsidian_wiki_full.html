@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMBER: Obsidian Protocol - Tactical Wiki v9.0</title>
+    <style>
+        :root {
+            --bg-color: #121212; --sidebar-bg: #1e1e1e; --content-bg: #181818;
+            --border-color: #333; --text-main: #e0e0e0;
+            --un-color: #00e5ff; --rdl-color: #ff3d00;
+            --rule-color: #76ff03; --faq-color: #ffea00;
+            --header-height: 60px; --sidebar-width: 320px;
+        }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; z-index: 100; }
+        .logo { font-weight: bold; font-size: 1.2rem; margin-right: 20px; color: #fff; letter-spacing: 1px; }
+        .logo span { color: var(--rdl-color); }
+        .search-input { flex: 1; max-width: 500px; background: #2c2c2c; border: 1px solid #444; padding: 8px 15px; border-radius: 4px; color: white; }
+        aside { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); overflow-y: auto; padding-top: var(--header-height); flex-shrink: 0; }
+        .section-header { padding: 15px 20px; font-weight: bold; border-bottom: 1px solid #333; background: #252525; cursor: pointer; display: flex; justify-content: space-between; border-left: 5px solid transparent; }
+        .header-rule { border-left-color: var(--rule-color); color: var(--rule-color); }
+        .header-faq { border-left-color: var(--faq-color); color: var(--faq-color); }
+        .header-un { border-left-color: var(--un-color); color: var(--un-color); }
+        .header-rdl { border-left-color: var(--rdl-color); color: var(--rdl-color); }
+        .nav-container { display: none; } .nav-container.show { display: block; }
+        .nav-item { padding: 8px 20px 8px 40px; cursor: pointer; color: #aaa; border-left: 3px solid transparent; display: block; font-size: 0.9rem;}
+        .nav-item:hover { background: #333; color: white; }
+        .nav-item.active { background: #333; color: white; font-weight: bold; }
+        .list-un .nav-item.active { border-left-color: var(--un-color); }
+        .list-rdl .nav-item.active { border-left-color: var(--rdl-color); }
+        main { flex: 1; background: var(--content-bg); padding: 40px; padding-top: calc(var(--header-height) + 40px); overflow-y: auto; }
+        .wiki-card { max-width: 900px; margin: 0 auto; background: #202020; border: 1px solid #333; border-radius: 8px; padding: 30px; }
+        .card-header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .rule .card-header { border-bottom-color: var(--rule-color); }
+        .faq .card-header { border-bottom-color: var(--faq-color); }
+        .wiki-title { margin: 0; font-size: 1.8rem; color: #fff; }
+        .wiki-subtitle { color: #888; font-size: 0.9rem; margin-top:5px; }
+        .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1px; background: #444; border: 1px solid #444; margin-bottom: 20px; }
+        .spec-item { background: #1a1a1a; padding: 10px; text-align: center; }
+        .spec-label { display: block; font-size: 0.7rem; color: #888; }
+        .spec-value { font-size: 1.1rem; font-weight: bold; }
+        .content-block { margin-bottom: 20px; color: #ccc; line-height: 1.6; }
+        .content-block h3 { color: #fff; border-left: 3px solid #555; padding-left: 10px; margin-bottom: 10px; }
+        .faq-item { background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .faq-q { color: var(--faq-color); font-weight: bold; display: block; margin-bottom: 5px; }
+        .faq-a { padding-left: 10px; border-left: 2px solid #555; color: #ddd; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">EMBER <span>DB</span></div>
+    <input type="text" id="searchInput" class="search-input" placeholder="검색 (예: 요격, 명중, 쿼츠...)">
+</header>
+<aside id="sidebar"></aside>
+<main id="mainContent">
+    <div style="text-align:center; padding-top:100px; color:#666;">
+        <h2>전술 데이터베이스 v9.0</h2>
+        <p>좌측 메뉴에서 <strong>규칙</strong>, <strong>FAQ</strong>, <strong>유닛 정보</strong>를 확인하세요.</p>
+    </div>
+</main>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMBER: Obsidian Protocol - Tactical Wiki v9.0</title>
+    <style>
+        :root {
+            --bg-color: #121212; --sidebar-bg: #1e1e1e; --content-bg: #181818;
+            --border-color: #333; --text-main: #e0e0e0;
+            --un-color: #00e5ff; --rdl-color: #ff3d00;
+            --rule-color: #76ff03; --faq-color: #ffea00;
+            --header-height: 60px; --sidebar-width: 320px;
+        }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; z-index: 100; }
+        .logo { font-weight: bold; font-size: 1.2rem; margin-right: 20px; color: #fff; letter-spacing: 1px; }
+        .logo span { color: var(--rdl-color); }
+        .search-input { flex: 1; max-width: 500px; background: #2c2c2c; border: 1px solid #444; padding: 8px 15px; border-radius: 4px; color: white; }
+        aside { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); overflow-y: auto; padding-top: var(--header-height); flex-shrink: 0; }
+        .section-header { padding: 15px 20px; font-weight: bold; border-bottom: 1px solid #333; background: #252525; cursor: pointer; display: flex; justify-content: space-between; border-left: 5px solid transparent; }
+        .header-rule { border-left-color: var(--rule-color); color: var(--rule-color); }
+        .header-faq { border-left-color: var(--faq-color); color: var(--faq-color); }
+        .header-un { border-left-color: var(--un-color); color: var(--un-color); }
+        .header-rdl { border-left-color: var(--rdl-color); color: var(--rdl-color); }
+        .nav-container { display: none; } .nav-container.show { display: block; }
+        .nav-item { padding: 8px 20px 8px 40px; cursor: pointer; color: #aaa; border-left: 3px solid transparent; display: block; font-size: 0.9rem;}
+        .nav-item:hover { background: #333; color: white; }
+        .nav-item.active { background: #333; color: white; font-weight: bold; }
+        .list-un .nav-item.active { border-left-color: var(--un-color); }
+        .list-rdl .nav-item.active { border-left-color: var(--rdl-color); }
+        main { flex: 1; background: var(--content-bg); padding: 40px; padding-top: calc(var(--header-height) + 40px); overflow-y: auto; }
+        .wiki-card { max-width: 900px; margin: 0 auto; background: #202020; border: 1px solid #333; border-radius: 8px; padding: 30px; }
+        .card-header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .rule .card-header { border-bottom-color: var(--rule-color); }
+        .faq .card-header { border-bottom-color: var(--faq-color); }
+        .wiki-title { margin: 0; font-size: 1.8rem; color: #fff; }
+        .wiki-subtitle { color: #888; font-size: 0.9rem; margin-top:5px; }
+        .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1px; background: #444; border: 1px solid #444; margin-bottom: 20px; }
+        .spec-item { background: #1a1a1a; padding: 10px; text-align: center; }
+        .spec-label { display: block; font-size: 0.7rem; color: #888; }
+        .spec-value { font-size: 1.1rem; font-weight: bold; }
+        .content-block { margin-bottom: 20px; color: #ccc; line-height: 1.6; }
+        .content-block h3 { color: #fff; border-left: 3px solid #555; padding-left: 10px; margin-bottom: 10px; }
+        .faq-item { background: #2a2a2a; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+        .faq-q { color: var(--faq-color); font-weight: bold; display: block; margin-bottom: 5px; }
+        .faq-a { padding-left: 10px; border-left: 2px solid #555; color: #ddd; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo">EMBER <span>DB</span></div>
+    <input type="text" id="searchInput" class="search-input" placeholder="검색 (예: 요격, 명중, 쿼츠...)">
+</header>
+<aside id="sidebar"></aside>
+<main id="mainContent">
+    <div style="text-align:center; padding-top:100px; color:#666;">
+        <h2>전술 데이터베이스 v9.0</h2>
+        <p>좌측 메뉴에서 <strong>규칙</strong>, <strong>FAQ</strong>, <strong>유닛 정보</strong>를 확인하세요.</p>
+    </div>
+</main>
