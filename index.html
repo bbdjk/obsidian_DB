@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OBSIDIAN DATA VIEWER</title>
+<style>
+    :root { --bg:#121212; --surf:#1e1e1e; --pri:#bb86fc; --txt:#e0e0e0; 
+            --rdl:#cf6679; --un:#03dac6; --gof:#4caf50; --pd:#ffb74d; }
+    body { margin:0; font-family:'Pretendard', sans-serif; background:var(--bg); color:var(--txt); display:flex; height:100vh; overflow:hidden; }
+    
+    /* 사이드바 */
+    #sidebar { width:280px; background:var(--surf); border-right:1px solid #333; display:flex; flex-direction:column; flex-shrink:0; }
+    .search-area { padding:20px; border-bottom:1px solid #333; }
+    .search-area input { width:100%; padding:10px; background:#000; border:1px solid #444; color:#fff; border-radius:6px; box-sizing:border-box; }
+    #nav { flex:1; overflow-y:auto; padding:10px; }
+    
+    .cat-title { font-size:0.8rem; color:#888; margin:20px 0 5px 10px; font-weight:bold; }
+    .nav-item { padding:10px 15px; cursor:pointer; border-radius:6px; margin-bottom:4px; font-size:0.95rem; }
+    .nav-item:hover { background:#333; }
+    .nav-item.active { background:#333; border-left:4px solid var(--pri); font-weight:bold; }
+    
+    /* 세력별 색상 */
+    .nav-item.rdl { border-left-color:var(--rdl); }
+    .nav-item.un { border-left-color:var(--un); }
+    .nav-item.gof { border-left-color:var(--gof); }
+    .nav-item.pd { border-left-color:var(--pd); }
+
+    /* 메인 컨텐츠 */
+    #main { flex:1; padding:40px; overflow-y:auto; }
+    .card { background:var(--surf); border-radius:12px; padding:30px; max-width:800px; margin:0 auto; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+    
+    .header-row { display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #333; padding-bottom:15px; }
+    .title-grp h1 { margin:0; font-size:2rem; color:var(--pri); }
+    .title-grp h1.rdl { color:var(--rdl); }
+    .title-grp h1.un { color:var(--un); }
+    .title-grp h1.gof { color:var(--gof); }
+    .title-grp h1.pd { color:var(--pd); }
+    
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(80px, 1fr)); gap:15px; margin-bottom:30px; background:#181818; padding:20px; border-radius:8px; }
+    .stat-item { text-align:center; }
+    .stat-val { font-size:1.2rem; font-weight:bold; color:#fff; }
+    .detail-block h3 { color:#fff; margin-bottom:5px; }
+    .detail-block p { color:#ccc; line-height:1.6; margin-top:0;}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="search-area"><input type="text" id="searchInput" placeholder="검색..."></div>
+    <div id="nav"></div>
+</div>
+<div id="main">
+    <div style="text-align:center; margin-top:20vh; opacity:0.5;">
+        <h1>EMBER DATABASE</h1>
+        <p>좌측 메뉴에서 항목을 선택하세요.</p>
+    </div>
+</div>
+
+<script src="db_rule.js"></script>
+<script src="db_rdl.js"></script>
+<script src="db_un.js"></script>
+<script src="db_gof.js"></script>
+<script src="db_pd.js"></script>
+
+<script>
+    // 1. 모든 데이터 파일 합치기
+    const DATABASE = [
+        ...(typeof DATA_RULE !== 'undefined' ? DATA_RULE : []),
+        ...(typeof DATA_RDL  !== 'undefined' ? DATA_RDL  : []),
+        ...(typeof DATA_UN   !== 'undefined' ? DATA_UN   : []),
+        ...(typeof DATA_GOF  !== 'undefined' ? DATA_GOF  : []),
+        ...(typeof DATA_PD   !== 'undefined' ? DATA_PD   : [])
+    ];
+
+    const nav = document.getElementById('nav');
+    const main = document.getElementById('main');
+
+    // 2. 목록 렌더링
+    function renderNav(list) {
+        nav.innerHTML = '';
+        let lastCat = '';
+        list.forEach(item => {
+            if(item.cat !== lastCat) {
+                const title = document.createElement('div');
+                title.className = 'cat-title';
+                title.innerText = item.cat;
+                nav.appendChild(title);
+                lastCat = item.cat;
+            }
+            const el = document.createElement('div');
+            el.className = `nav-item ${item.color || ''}`;
+            el.innerText = item.title;
+            el.onclick = () => renderDetail(item);
+            nav.appendChild(el);
+        });
+    }
+
+    // 3. 상세 내용 렌더링
+    function renderDetail(item) {
+        let html = `<div class="card">`;
+        html += `<div class="header-row">
+                    <div class="title-grp">
+                        <h1 class="${item.color||''}">${item.title}</h1>
+                        <div style="color:#888;">${item.sub || item.cat}</div>
+                    </div>
+                 </div>`;
+
+        if(item.stats) {
+            html += `<div class="stats-grid">`;
+            for(let [k,v] of Object.entries(item.stats)) 
+                html += `<div class="stat-item"><span style="color:#666;font-size:0.8rem;">${k}</span><div class="stat-val">${v}</div></div>`;
+            html += `</div>`;
+        }
+
+        if(item.data) { // FAQ 타입
+            item.data.forEach(d => html += `<div style="margin-bottom:15px; padding:10px; background:#252525; border-radius:5px;"><div style="color:#ffb74d; font-weight:bold;">Q. ${d.q}</div><div style="color:#ddd; margin-top:5px;">A. ${d.a}</div></div>`);
+        } else if(item.details) { // 유닛/미션 타입
+            item.details.forEach(d => html += `<div class="detail-block"><h3>${d.h}</h3><p>${d.t}</p></div>`);
+        }
+        html += `</div>`;
+        main.innerHTML = html;
+    }
+
+    // 4. 검색 기능
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = DATABASE.filter(i => JSON.stringify(i).toLowerCase().includes(term));
+        renderNav(filtered);
+    });
+
+    // 시작
+    renderNav(DATABASE);
+</script>
+</body>
+</html>
