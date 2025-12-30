@@ -3,20 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>옵시디언 프로토콜 DB (분리형)</title>
+    <title>옵시디언 프로토콜 DB (폴더 기능)</title>
     <style>
-        /* 스타일은 기존과 동일하게 유지 */
+        /* 기본 설정 */
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background-color: #121212; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* 레이아웃 */
         #sidebar { width: 300px; background-color: #1e1e1e; border-right: 1px solid #333; display: flex; flex-direction: column; }
         #main { flex: 1; padding: 20px; overflow-y: auto; background-color: #121212; position: relative; }
+
+        /* 검색창 */
         .search-box { padding: 15px; border-bottom: 1px solid #333; }
         #searchInput { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: #fff; border-radius: 4px; }
+
+        /* 네비게이션 (접기/펼치기 스타일 추가) */
         #nav { flex: 1; overflow-y: auto; }
-        .nav-category { padding: 10px 15px; font-weight: bold; color: #888; font-size: 0.85rem; text-transform: uppercase; margin-top: 10px; }
-        .nav-item { padding: 10px 15px; cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; font-size: 0.95rem; }
+        
+        .nav-category { 
+            padding: 12px 15px; 
+            font-weight: bold; 
+            color: #888; 
+            font-size: 0.85rem; 
+            text-transform: uppercase; 
+            margin-top: 5px; 
+            cursor: pointer; /* 클릭 가능 표시 */
+            display: flex;
+            justify-content: space-between; /* 화살표 오른쪽 정렬 */
+            align-items: center;
+            background-color: #1e1e1e;
+            user-select: none; /* 텍스트 선택 방지 */
+        }
+        .nav-category:hover { color: #ccc; background-color: #252525; }
+        
+        /* 화살표 아이콘 */
+        .arrow { transition: transform 0.2s ease; font-size: 0.7rem; }
+        .arrow.collapsed { transform: rotate(-90deg); } /* 접혔을 때 회전 */
+
+        /* 아이템 목록 컨테이너 */
+        .nav-group-container { display: block; }
+        .nav-group-container.collapsed { display: none; } /* 접히면 숨김 */
+
+        .nav-item { padding: 10px 15px 10px 25px; /* 들여쓰기 */ cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; font-size: 0.95rem; }
         .nav-item:hover { background-color: #2a2a2a; }
         .nav-item.active { background-color: #252525; border-left-color: #ffb74d; color: #ffb74d; }
+
+        /* 콘텐츠 영역 */
         .content-card { max-width: 800px; margin: 0 auto; }
         .sub-title { color: #888; font-size: 1.1rem; margin-bottom: 20px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 25px; background: #1e1e1e; padding: 15px; border-radius: 8px; }
@@ -26,7 +58,6 @@
         .detail-block h3 { margin: 0 0 10px 0; color: #ffb74d; font-size: 1.1rem; }
         .detail-block p { margin: 0; line-height: 1.6; color: #ccc; }
         
-        /* 로딩 에러 메시지 스타일 */
         .error-msg { color: #ff5252; padding: 10px; border: 1px solid #ff5252; margin: 10px; border-radius: 5px; background: rgba(255,82,82,0.1); }
         
         @media (max-width: 768px) {
@@ -62,17 +93,18 @@
 <script src="db_pd.js" onerror="logError('db_pd.js')"></script>
 
 <script>
+    // 에러 로깅용
     const statusDiv = document.getElementById('file-status');
     const errorContainer = document.getElementById('error-container');
     let loadErrors = [];
 
     function logError(fileName) {
         loadErrors.push(fileName);
-        const msg = `<div class="error-msg">⚠️ <b>${fileName}</b> 로드 실패!<br>파일 경로를 확인하거나 Live Server로 실행하세요.</div>`;
+        const msg = `<div class="error-msg">⚠️ <b>${fileName}</b> 로드 실패!<br>Live Server를 사용해주세요.</div>`;
         errorContainer.innerHTML += msg;
     }
 
-    // 데이터 통합 (파일이 없어도 에러 안 나게 처리)
+    // 데이터 통합 (안전 장치 포함)
     const DATABASE = [
         ...(typeof DATA_RULE !== 'undefined' ? DATA_RULE : []),
         ...(typeof DATA_FAQ  !== 'undefined' ? DATA_FAQ  : []),
@@ -82,23 +114,26 @@
         ...(typeof DATA_PD   !== 'undefined' ? DATA_PD   : [])
     ];
 
+    // 로드 상태 표시
+    if(loadErrors.length === 0) {
+        statusDiv.innerHTML = "✅ 시스템 정상 작동 중";
+        statusDiv.style.color = "#4caf50";
+    } else {
+        statusDiv.innerHTML = `❌ ${loadErrors.length}개 파일 오류`;
+        statusDiv.style.color = "#ff5252";
+    }
+
     const nav = document.getElementById('nav');
     const main = document.getElementById('main');
     const searchInput = document.getElementById('searchInput');
 
-    // 초기 상태 표시
-    if(loadErrors.length === 0) {
-        statusDiv.innerHTML = "✅ 모든 데이터 파일 로드됨";
-        statusDiv.style.color = "#4caf50";
-    } else {
-        statusDiv.innerHTML = `❌ ${loadErrors.length}개 파일 로드 실패`;
-        statusDiv.style.color = "#ff5252";
-    }
-
-    function renderNav(list) {
+    // ==========================================
+    // [핵심 변경] 접기/펼치기 기능이 포함된 렌더링 함수
+    // ==========================================
+    function renderNav(list, isSearch = false) {
         nav.innerHTML = '';
         if(list.length === 0) {
-            nav.innerHTML = '<div style="padding:15px; color:#666;">데이터가 없거나 검색 결과가 없습니다.</div>';
+            nav.innerHTML = '<div style="padding:15px; color:#666;">검색 결과가 없습니다.</div>';
             return;
         }
 
@@ -109,12 +144,18 @@
             grouped[cat].push(item);
         });
 
+        // 카테고리별 루프
         for (const [catName, items] of Object.entries(grouped)) {
+            // 1. 카테고리 헤더 생성
             const catHeader = document.createElement('div');
             catHeader.className = 'nav-category';
-            catHeader.textContent = catName;
-            nav.appendChild(catHeader);
+            catHeader.innerHTML = `<span>${catName}</span> <span class="arrow">▼</span>`;
+            
+            // 2. 아이템 담을 컨테이너 생성
+            const groupContainer = document.createElement('div');
+            groupContainer.className = 'nav-group-container';
 
+            // 3. 각 아이템 생성
             items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'nav-item';
@@ -124,8 +165,22 @@
                     div.classList.add('active');
                     showDetail(item);
                 };
-                nav.appendChild(div);
+                groupContainer.appendChild(div);
             });
+
+            // 4. 클릭 이벤트 (접기/펴기)
+            catHeader.onclick = () => {
+                groupContainer.classList.toggle('collapsed'); // 목록 숨김 토글
+                catHeader.querySelector('.arrow').classList.toggle('collapsed'); // 화살표 회전 토글
+            };
+
+            // [추가 기능] 검색 중일 때는 모든 카테고리를 강제로 펼쳐둠
+            if(isSearch) {
+                groupContainer.classList.remove('collapsed');
+            }
+
+            nav.appendChild(catHeader);
+            nav.appendChild(groupContainer);
         }
     }
 
@@ -179,7 +234,8 @@
             item.title.toLowerCase().includes(keyword) || 
             (item.cat && item.cat.toLowerCase().includes(keyword))
         );
-        renderNav(filtered);
+        // 검색 시에는 자동으로 펼쳐지도록 true 전달
+        renderNav(filtered, keyword.length > 0);
     });
 
     renderNav(DATABASE);
