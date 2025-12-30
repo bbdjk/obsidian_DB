@@ -1,71 +1,140 @@
-<script src="db_rule.js"></script>
-<script src="db_faq.js"></script>  <script src="db_rdl.js"></script>
-<script src="db_un.js"></script>
-<script src="db_gof.js"></script>
-<script src="db_pd.js"></script>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>옵시디언 프로토콜 DB (분리형)</title>
+    <style>
+        /* 스타일은 기존과 동일하게 유지 */
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background-color: #121212; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 300px; background-color: #1e1e1e; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        #main { flex: 1; padding: 20px; overflow-y: auto; background-color: #121212; position: relative; }
+        .search-box { padding: 15px; border-bottom: 1px solid #333; }
+        #searchInput { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; color: #fff; border-radius: 4px; }
+        #nav { flex: 1; overflow-y: auto; }
+        .nav-category { padding: 10px 15px; font-weight: bold; color: #888; font-size: 0.85rem; text-transform: uppercase; margin-top: 10px; }
+        .nav-item { padding: 10px 15px; cursor: pointer; border-left: 3px solid transparent; transition: 0.2s; font-size: 0.95rem; }
+        .nav-item:hover { background-color: #2a2a2a; }
+        .nav-item.active { background-color: #252525; border-left-color: #ffb74d; color: #ffb74d; }
+        .content-card { max-width: 800px; margin: 0 auto; }
+        .sub-title { color: #888; font-size: 1.1rem; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-bottom: 25px; background: #1e1e1e; padding: 15px; border-radius: 8px; }
+        .stat-item { text-align: center; }
+        .stat-val { font-size: 1.2rem; font-weight: bold; margin-top: 5px; color: #fff; }
+        .detail-block { margin-bottom: 20px; padding: 15px; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; }
+        .detail-block h3 { margin: 0 0 10px 0; color: #ffb74d; font-size: 1.1rem; }
+        .detail-block p { margin: 0; line-height: 1.6; color: #ccc; }
+        
+        /* 로딩 에러 메시지 스타일 */
+        .error-msg { color: #ff5252; padding: 10px; border: 1px solid #ff5252; margin: 10px; border-radius: 5px; background: rgba(255,82,82,0.1); }
+        
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { width: 100%; height: 40%; }
+            #main { height: 60%; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="검색...">
+    </div>
+    <div id="file-status" style="font-size:0.7rem; padding:5px 15px; color:#666;"></div>
+    <div id="nav"></div>
+</div>
+
+<div id="main">
+    <div style="text-align:center; color:#666; margin-top:50px;">
+        <h2>데이터베이스 준비 완료</h2>
+        <p>왼쪽 목록에서 항목을 선택하세요.</p>
+        <div id="error-container"></div>
+    </div>
+</div>
+
+<script src="db_rule.js" onerror="logError('db_rule.js')"></script>
+<script src="db_faq.js" onerror="logError('db_faq.js')"></script>
+<script src="db_rdl.js" onerror="logError('db_rdl.js')"></script>
+<script src="db_un.js" onerror="logError('db_un.js')"></script>
+<script src="db_gof.js" onerror="logError('db_gof.js')"></script>
+<script src="db_pd.js" onerror="logError('db_pd.js')"></script>
 
 <script>
-    // 1. 데이터 통합 (DATA_FAQ 추가됨)
+    const statusDiv = document.getElementById('file-status');
+    const errorContainer = document.getElementById('error-container');
+    let loadErrors = [];
+
+    function logError(fileName) {
+        loadErrors.push(fileName);
+        const msg = `<div class="error-msg">⚠️ <b>${fileName}</b> 로드 실패!<br>파일 경로를 확인하거나 Live Server로 실행하세요.</div>`;
+        errorContainer.innerHTML += msg;
+    }
+
+    // 데이터 통합 (파일이 없어도 에러 안 나게 처리)
     const DATABASE = [
         ...(typeof DATA_RULE !== 'undefined' ? DATA_RULE : []),
-        ...(typeof DATA_FAQ  !== 'undefined' ? DATA_FAQ  : []), // 여기 추가!
+        ...(typeof DATA_FAQ  !== 'undefined' ? DATA_FAQ  : []),
         ...(typeof DATA_RDL  !== 'undefined' ? DATA_RDL  : []),
         ...(typeof DATA_UN   !== 'undefined' ? DATA_UN   : []),
         ...(typeof DATA_GOF  !== 'undefined' ? DATA_GOF  : []),
         ...(typeof DATA_PD   !== 'undefined' ? DATA_PD   : [])
     ];
 
-    // ... (이 아래 내용은 기존과 동일합니다) ...
     const nav = document.getElementById('nav');
     const main = document.getElementById('main');
+    const searchInput = document.getElementById('searchInput');
 
-    function renderNav(list, isSearch = false) {
+    // 초기 상태 표시
+    if(loadErrors.length === 0) {
+        statusDiv.innerHTML = "✅ 모든 데이터 파일 로드됨";
+        statusDiv.style.color = "#4caf50";
+    } else {
+        statusDiv.innerHTML = `❌ ${loadErrors.length}개 파일 로드 실패`;
+        statusDiv.style.color = "#ff5252";
+    }
+
+    function renderNav(list) {
         nav.innerHTML = '';
+        if(list.length === 0) {
+            nav.innerHTML = '<div style="padding:15px; color:#666;">데이터가 없거나 검색 결과가 없습니다.</div>';
+            return;
+        }
+
         const grouped = {};
         list.forEach(item => {
-            if(!grouped[item.cat]) grouped[item.cat] = [];
-            grouped[item.cat].push(item);
+            const cat = item.cat || 'Others';
+            if(!grouped[cat]) grouped[cat] = [];
+            grouped[cat].push(item);
         });
 
         for (const [catName, items] of Object.entries(grouped)) {
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'cat-group';
-            if(isSearch) groupDiv.classList.add('open');
-
-            const header = document.createElement('div');
-            header.className = 'cat-header';
-            header.innerHTML = `<span>${catName}</span> <span class="arrow">▶</span>`;
-            header.onclick = () => groupDiv.classList.toggle('open');
-
-            const listDiv = document.createElement('div');
-            listDiv.className = 'nav-list';
+            const catHeader = document.createElement('div');
+            catHeader.className = 'nav-category';
+            catHeader.textContent = catName;
+            nav.appendChild(catHeader);
 
             items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = `nav-item ${item.color || ''}`;
-                el.innerText = item.title;
-                el.onclick = (e) => {
-                    e.stopPropagation();
-                    renderDetail(item);
-                    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
-                    el.classList.add('active');
+                const div = document.createElement('div');
+                div.className = 'nav-item';
+                div.textContent = item.title;
+                div.onclick = () => {
+                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    showDetail(item);
                 };
-                listDiv.appendChild(el);
+                nav.appendChild(div);
             });
-            groupDiv.appendChild(header);
-            groupDiv.appendChild(listDiv);
-            nav.appendChild(groupDiv);
         }
     }
 
-    function renderDetail(item) {
-        let html = `<div class="card">`;
-        html += `<div class="header-row">
-                    <div class="title-grp">
-                        <h1 class="${item.color||''}">${item.title}</h1>
-                        <div style="color:#888;">${item.sub || item.cat}</div>
-                    </div>
-                 </div>`;
+    function showDetail(item) {
+        let html = `<div class="content-card fade-in">
+                    <div style="margin-bottom:20px;">
+                        <h1 style="color:${getColor(item.color)}">${item.title}</h1>
+                        <div class="sub-title">${item.sub || item.cat}</div>
+                    </div>`;
 
         if(item.stats) {
             html += `<div class="stats-grid">`;
@@ -75,23 +144,46 @@
         }
 
         if(item.data) { 
-            item.data.forEach(d => html += `<div style="margin-bottom:15px; padding:15px; background:#252525; border-radius:8px;"><div style="color:#ffb74d; font-weight:bold; margin-bottom:5px;">Q. ${d.q}</div><div style="color:#ddd; line-height:1.5;">A. ${d.a}</div></div>`);
+            if(item.desc) html += `<p style="color:#aaa; margin-bottom:20px;">${item.desc}</p>`;
+            item.data.forEach(d => {
+                let qText = d.q.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                let aText = d.a.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                html += `<div class="detail-block">
+                            <h3 style="color:#fff;">Q. ${qText}</h3>
+                            <p style="color:#bbb; margin-top:5px;">A. ${aText}</p>
+                         </div>`;
+            });
         } else if(item.details) {
-            item.details.forEach(d => html += `<div class="detail-block"><h3>${d.h}</h3><p>${d.t}</p></div>`);
+            item.details.forEach(d => {
+                let tText = d.t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                html += `<div class="detail-block"><h3>${d.h}</h3><p>${tText}</p></div>`;
+            });
         }
+        
         html += `</div>`;
         main.innerHTML = html;
         if(window.innerWidth <= 768) main.scrollTop = 0;
     }
 
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        if(!term) { renderNav(DATABASE, false); return; }
-        const filtered = DATABASE.filter(i => JSON.stringify(i).toLowerCase().includes(term));
-        renderNav(filtered, true);
+    function getColor(code) {
+        if(code === 'rdl') return '#ff5252';
+        if(code === 'un') return '#448aff';
+        if(code === 'gof') return '#69f0ae';
+        if(code === 'pd') return '#e040fb';
+        return '#e0e0e0';
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        const keyword = e.target.value.toLowerCase();
+        const filtered = DATABASE.filter(item => 
+            item.title.toLowerCase().includes(keyword) || 
+            (item.cat && item.cat.toLowerCase().includes(keyword))
+        );
+        renderNav(filtered);
     });
 
     renderNav(DATABASE);
+
 </script>
 </body>
 </html>
