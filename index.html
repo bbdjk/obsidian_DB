@@ -36,9 +36,9 @@
         }
         .nav-category:hover { color: #ccc; background-color: #252525; }
         
-        /* 화살표 아이콘 */
-        .arrow { transition: transform 0.2s ease; font-size: 0.7rem; }
-        .arrow.collapsed { transform: rotate(-90deg); } /* 접혔을 때 회전 */
+        /* 화살표 아이콘 (기본: 접힘 ▶, 펼침: 회전) */
+        .arrow { transition: transform 0.2s ease; font-size: 0.7rem; transform: rotate(0deg); }
+        .arrow.expanded { transform: rotate(90deg); }
 
         /* 아이템 목록 컨테이너 */
         .nav-group-container { display: block; }
@@ -60,69 +60,24 @@
         
         .error-msg { color: #ff5252; padding: 10px; border: 1px solid #ff5252; margin: 10px; border-radius: 5px; background: rgba(255,82,82,0.1); }
         
+        /* 검색 결과 */
+        .search-results { max-width: 900px; margin: 0 auto; }
+        .search-header { color:#888; margin: 10px 0 18px 0; }
+        .search-result { padding: 14px; background:#1e1e1e; border:1px solid #333; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
+        .search-result:hover { background:#252525; }
+        .search-result-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 6px 0; color:#fff; }
+        .search-result-meta { font-size: 0.85rem; color:#888; margin-bottom: 8px; }
+        .search-result-excerpt { color:#bbb; line-height: 1.5; }
+        mark { background: rgba(255,183,77,0.25); color:#ffb74d; padding:0 2px; border-radius:3px; }
+
         @media (max-width: 768px) {
             body { flex-direction: column; }
             #sidebar { width: 100%; height: 40%; }
             #main { height: 60%; }
         }
-
-        /* =========================
-           사이드바 접힘(기본) + 토글
-        ========================= */
-        #sidebar { flex: 0 0 300px; transition: transform 0.18s ease, width 0.18s ease, flex-basis 0.18s ease; }
-        body.sidebar-collapsed #sidebar {
-            width: 0;
-            flex-basis: 0;
-            border-right: none;
-            transform: translateX(-100%);
-            pointer-events: none;
-        }
-        body.sidebar-collapsed #sidebar * { opacity: 0; }
-        #sidebarToggle {
-            position: fixed;
-            top: 12px;
-            left: 312px; /* 사이드바(300) + 여백 */
-            z-index: 9999;
-            background: #2c2c2c;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            line-height: 1;
-            user-select: none;
-        }
-        body.sidebar-collapsed #sidebarToggle { left: 12px; }
-
-        /* =========================
-           검색 결과 UI
-        ========================= */
-        .search-header { max-width: 900px; margin: 0 auto 12px auto; color: #bbb; }
-        .search-list { max-width: 900px; margin: 0 auto; display: grid; gap: 10px; }
-        .search-item-card {
-            background: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 14px;
-            cursor: pointer;
-            transition: 0.15s;
-        }
-        .search-item-card:hover { transform: translateY(-1px); border-color: #555; }
-        .search-item-title { font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
-        .search-item-meta { font-size: 0.85rem; color: #888; margin-bottom: 8px; }
-        .search-item-excerpt { color: #cfcfcf; line-height: 1.55; }
-        mark { background: rgba(255,183,77,0.25); color: #ffb74d; padding: 0 2px; border-radius: 3px; }
-
-        @media (max-width: 768px) {
-            #sidebarToggle { left: 12px; top: 8px; }
-            body.sidebar-collapsed #sidebar { transform: translateY(-100%); } /* 모바일(상단 사이드바) 대응 */
-        }
-
     </style>
 </head>
 <body>
-
-<button id="sidebarToggle" aria-label="사이드바 토글" aria-expanded="false">☰</button>
 
 <div id="sidebar">
     <div class="search-box">
@@ -179,156 +134,53 @@
     }
 
     const nav = document.getElementById('nav');
+
     const main = document.getElementById('main');
     const searchInput = document.getElementById('searchInput');
 
-    const NAV_ITEM_MAP = new Map();
-
-    // ==========================================
-    // [핵심 변경] 접기/펼치기 기능이 포함된 렌더링 함수
-    // ==========================================
-    function renderNav(list, isSearch = false) {
-        nav.innerHTML = '';
-        NAV_ITEM_MAP.clear();
-        if(list.length === 0) {
-            nav.innerHTML = '<div style="padding:15px; color:#666;">검색 결과가 없습니다.</div>';
-            return;
-        }
-
-        const grouped = {};
-        list.forEach(item => {
-            const cat = item.cat || 'Others';
-            if(!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(item);
-        });
-
-        // 카테고리별 루프
-        for (const [catName, items] of Object.entries(grouped)) {
-            // 1. 카테고리 헤더 생성
-            const catHeader = document.createElement('div');
-            catHeader.className = 'nav-category';
-            catHeader.innerHTML = `<span>${catName}</span> <span class="arrow">▼</span>`;
-            
-            // 2. 아이템 담을 컨테이너 생성
-            const groupContainer = document.createElement('div');
-            groupContainer.className = 'nav-group-container';
-
-            // 3. 각 아이템 생성
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'nav-item';
-                div.textContent = item.title;
-                div.dataset.itemId = item.id || '';
-                if(item.id) NAV_ITEM_MAP.set(item.id, div);
-
-                div.onclick = () => {
-                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                    div.classList.add('active');
-                    showDetail(item);
-                };
-                groupContainer.appendChild(div);
-            });
-
-            // 4. 클릭 이벤트 (접기/펴기)
-            catHeader.onclick = () => {
-                groupContainer.classList.toggle('collapsed'); // 목록 숨김 토글
-                catHeader.querySelector('.arrow').classList.toggle('collapsed'); // 화살표 회전 토글
-            };
-
-            // [추가 기능] 검색 중일 때는 모든 카테고리를 강제로 펼쳐둠
-            if(isSearch) {
-                groupContainer.classList.remove('collapsed');
-            }
-
-            nav.appendChild(catHeader);
-            nav.appendChild(groupContainer);
-        }
-    }
-
-    function showDetail(item) {
-        let html = `<div class="content-card fade-in">
-                    <div style="margin-bottom:20px;">
-                        <h1 style="color:${getColor(item.color)}">${item.title}</h1>
-                        <div class="sub-title">${item.sub || item.cat}</div>
-                    </div>`;
-
-        if(item.stats) {
-            html += `<div class="stats-grid">`;
-            for(let [k,v] of Object.entries(item.stats)) 
-                html += `<div class="stat-item"><span style="color:#666;font-size:0.8rem;">${k}</span><div class="stat-val">${v}</div></div>`;
-            html += `</div>`;
-        }
-
-        if(item.data) { 
-            if(item.desc) html += `<p style="color:#aaa; margin-bottom:20px;">${item.desc}</p>`;
-            item.data.forEach(d => {
-                let qText = d.q.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                let aText = d.a.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                html += `<div class="detail-block">
-                            <h3 style="color:#fff;">Q. ${qText}</h3>
-                            <p style="color:#bbb; margin-top:5px;">A. ${aText}</p>
-                         </div>`;
-            });
-        } else if(item.details) {
-            item.details.forEach(d => {
-                let tText = d.t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                html += `<div class="detail-block"><h3>${d.h}</h3><p>${tText}</p></div>`;
-            });
-        }
-        
-        html += `</div>`;
-        main.innerHTML = html;
-        if(window.innerWidth <= 768) main.scrollTop = 0;
-    }
-
+    // ----------------------------
+    // 유틸
+    // ----------------------------
     function getColor(code) {
         if(code === 'rdl') return '#ff5252';
-        if(code === 'un') return '#448aff';
+        if(code === 'un')  return '#448aff';
         if(code === 'gof') return '#69f0ae';
-        if(code === 'pd') return '#e040fb';
+        if(code === 'pd')  return '#e040fb';
         return '#e0e0e0';
     }
 
-    
-    // --------------------------
-    // 사이드바 토글 (첫 진입: 기본 접힘)
-    // --------------------------
-    const DEFAULT_MAIN_HTML = main.innerHTML;
-    const SIDEBAR_STATE_KEY = "op_sidebar_collapsed";
-    let sidebarCollapsed = (() => {
-        const v = localStorage.getItem(SIDEBAR_STATE_KEY);
-        return v == null ? true : v === "true";
-    })();
-
-    function applySidebarState() {
-        document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
-        const btn = document.getElementById("sidebarToggle");
-        if(btn) btn.setAttribute("aria-expanded", String(!sidebarCollapsed));
-        localStorage.setItem(SIDEBAR_STATE_KEY, String(sidebarCollapsed));
+    function escapeHtml(s) {
+        return String(s)
+            .replaceAll('&','&amp;')
+            .replaceAll('<','&lt;')
+            .replaceAll('>','&gt;')
+            .replaceAll('"','&quot;')
+            .replaceAll("'","&#039;");
     }
 
-    document.getElementById("sidebarToggle")?.addEventListener("click", () => {
-        sidebarCollapsed = !sidebarCollapsed;
-        applySidebarState();
-    });
-
-    applySidebarState();
-
-    // --------------------------
-    // 전체 DB 통합 검색 (오른쪽에 결과 표시)
-    // --------------------------
-    function stripHtml(input) {
-        if(!input) return "";
-        const doc = new DOMParser().parseFromString(String(input), "text/html");
-        return (doc.body?.textContent || "").replace(/\s+/g, " ").trim();
+    function cssEsc(s) {
+        try { return (window.CSS && CSS.escape) ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'); }
+        catch { return String(s).replace(/["\\]/g, '\\$&'); }
     }
 
-    function buildSearchText(item) {
+    function makeKey(item) {
+        const cat = item.cat || 'Others';
+        const title = item.title || '';
+        return encodeURIComponent(cat + '|' + title);
+    }
+
+    function stripToText(html) {
+        if(!html) return '';
+        const doc = new DOMParser().parseFromString(String(html), 'text/html');
+        return (doc.body?.textContent || '').replace(/\s+/g,' ').trim();
+    }
+
+    function itemToSearchText(item) {
         const parts = [];
-        parts.push(item.title || "");
-        parts.push(item.cat || "");
-        parts.push(item.sub || "");
-        if(item.desc) parts.push(item.desc);
+        if(item.title) parts.push(item.title);
+        if(item.cat)   parts.push(item.cat);
+        if(item.sub)   parts.push(item.sub);
+        if(item.desc)  parts.push(stripToText(item.desc));
 
         if(item.stats) {
             for(const [k,v] of Object.entries(item.stats)) parts.push(`${k} ${v}`);
@@ -336,125 +188,346 @@
 
         if(Array.isArray(item.details)) {
             item.details.forEach(d => {
-                parts.push(stripHtml(d.h));
-                parts.push(stripHtml(d.t));
+                if(d?.h) parts.push(d.h);
+                if(d?.t) parts.push(stripToText(d.t));
             });
         }
 
-        if(Array.isArray(item.data)) { // FAQ
+        // FAQ 형태: data = [{q,a}, ...]
+        if(Array.isArray(item.data)) {
+            if(item.desc) parts.push(stripToText(item.desc));
             item.data.forEach(d => {
-                parts.push(d.q || "");
-                parts.push(d.a || "");
+                if(d?.q) parts.push(stripToText(d.q));
+                if(d?.a) parts.push(stripToText(d.a));
             });
         }
 
-        return parts.join(" ").replace(/\s+/g, " ").trim();
+        return parts.join('\n');
     }
 
-    const SEARCH_INDEX = DATABASE.map(item => {
-        const text = buildSearchText(item);
-        return { item, text, lc: text.toLowerCase() };
+    
+function parseCategory(catRaw) {
+    const cat = (catRaw || 'Others').trim();
+    // UN 하위 카테고리: "UN - xxx" 형태를 "UN" 상위 + "xxx" 하위로 분리
+    const m = /^UN\s*-\s*(.+)$/.exec(cat);
+    if(m) return { parent: 'UN', child: m[1].trim(), full: cat };
+    return { parent: cat, child: null, full: cat };
+}
+
+function formatCategoryLabel(catRaw) {
+    const p = parseCategory(catRaw);
+    return p.child ? `${p.parent} > ${p.child}` : p.parent;
+}
+
+function highlightHtml(text, keyword) {
+        if(!keyword) return escapeHtml(text);
+        const safe = escapeHtml(text);
+        const re = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'ig');
+        return safe.replace(re, '<mark>$1</mark>');
+    }
+
+    function excerpt(text, keyword, radius = 70) {
+        const t = text || '';
+        const lt = t.toLowerCase();
+        const k = (keyword || '').toLowerCase();
+        const i = lt.indexOf(k);
+        if(i < 0) return t.slice(0, 180);
+        const start = Math.max(0, i - radius);
+        const end = Math.min(t.length, i + k.length + radius);
+        return (start > 0 ? '…' : '') + t.slice(start, end) + (end < t.length ? '…' : '');
+    }
+
+    function showHome() {
+        main.innerHTML = `
+            <div style="text-align:center; color:#666; margin-top:50px;">
+                <h2>데이터베이스 준비 완료</h2>
+                <p>왼쪽 목록에서 항목을 선택하세요.</p>
+                <div id="error-container"></div>
+            </div>
+        `;
+        const homeErr = main.querySelector('#error-container');
+        if(homeErr && window.__OP_LOAD_ERRORS_HTML__) homeErr.innerHTML = window.__OP_LOAD_ERRORS_HTML__;
+    }
+
+    
+// ----------------------------
+// 왼쪽 네비: 기본 접힘 + UN 2단 폴더
+// ----------------------------
+function renderNav(list) {
+    nav.innerHTML = '';
+    if(list.length === 0) {
+        nav.innerHTML = '<div style="padding:15px; color:#666;">데이터가 없습니다.</div>';
+        return;
+    }
+
+    // parent -> { __items:[], children:{childName:[]} }
+    const grouped = new Map();
+
+    list.forEach(item => {
+        const p = parseCategory(item.cat);
+        if(!grouped.has(p.parent)) grouped.set(p.parent, { __items: [], children: new Map() });
+
+        const bucket = grouped.get(p.parent);
+        if(p.child) {
+            if(!bucket.children.has(p.child)) bucket.children.set(p.child, []);
+            bucket.children.get(p.child).push(item);
+        } else {
+            bucket.__items.push(item);
+        }
     });
 
-    function escapeHtml(s) {
-        return String(s)
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
-    }
+    for (const [parentName, bucket] of grouped.entries()) {
+        // 상위 카테고리 헤더
+        const parentHeader = document.createElement('div');
+        parentHeader.className = 'nav-category';
+        parentHeader.dataset.parent = parentName;
+        parentHeader.innerHTML = `<span>${escapeHtml(parentName)}</span> <span class="arrow">▶</span>`;
 
-    function highlightHtml(text, qTokens) {
-        let out = escapeHtml(text);
-        qTokens.forEach(tok => {
-            if(!tok) return;
-            const re = new RegExp(`(${tok.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
-            out = out.replace(re, "<mark>$1</mark>");
+        const parentContainer = document.createElement('div');
+        parentContainer.className = 'nav-group-container collapsed';
+        parentContainer.dataset.parent = parentName;
+
+        // 일반(1단) 카테고리 아이템
+        bucket.__items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'nav-item';
+            div.textContent = item.title;
+            div.dataset.key = makeKey(item);
+            div.dataset.parent = parentName;
+            div.dataset.child = '';
+
+            div.onclick = () => {
+                activateNavByKey(div.dataset.key);
+                showDetail(item);
+                if(window.innerWidth <= 768) main.scrollTop = 0;
+            };
+            parentContainer.appendChild(div);
         });
-        return out;
-    }
 
-    function makeExcerpt(fullText, qTokens, radius = 80) {
-        const t = fullText || "";
-        const tl = t.toLowerCase();
-        let idx = -1;
-        for(const tok of qTokens) {
-            const i = tl.indexOf(tok);
-            if(i >= 0) { idx = i; break; }
+        // UN 같은 2단 구조(하위 카테고리)
+        for (const [childName, items] of bucket.children.entries()) {
+            const childHeader = document.createElement('div');
+            childHeader.className = 'nav-subcategory';
+            childHeader.dataset.parent = parentName;
+            childHeader.dataset.child = childName;
+            childHeader.innerHTML = `<span>${escapeHtml(childName)}</span> <span class="arrow">▶</span>`;
+
+            const childContainer = document.createElement('div');
+            childContainer.className = 'nav-subgroup-container collapsed';
+            childContainer.dataset.parent = parentName;
+            childContainer.dataset.child = childName;
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'nav-item';
+                div.textContent = item.title;
+                div.dataset.key = makeKey(item);
+                div.dataset.parent = parentName;
+                div.dataset.child = childName;
+
+                div.onclick = () => {
+                    activateNavByKey(div.dataset.key);
+                    showDetail(item);
+                    if(window.innerWidth <= 768) main.scrollTop = 0;
+                };
+
+                childContainer.appendChild(div);
+            });
+
+            childHeader.onclick = () => {
+                const isCollapsed = childContainer.classList.contains('collapsed');
+                if(isCollapsed) {
+                    childContainer.classList.remove('collapsed');
+                    childHeader.querySelector('.arrow')?.classList.add('expanded');
+                } else {
+                    childContainer.classList.add('collapsed');
+                    childHeader.querySelector('.arrow')?.classList.remove('expanded');
+                }
+            };
+
+            parentContainer.appendChild(childHeader);
+            parentContainer.appendChild(childContainer);
         }
-        if(idx < 0) return t.slice(0, 220);
 
-        const start = Math.max(0, idx - radius);
-        const end = Math.min(t.length, idx + qTokens[0].length + radius);
-        const prefix = start > 0 ? "…" : "";
-        const suffix = end < t.length ? "…" : "";
-        return (prefix + t.slice(start, end) + suffix).replace(/\s+/g, " ").trim();
+        parentHeader.onclick = () => {
+            const isCollapsed = parentContainer.classList.contains('collapsed');
+            if(isCollapsed) {
+                parentContainer.classList.remove('collapsed');
+                parentHeader.querySelector('.arrow')?.classList.add('expanded');
+            } else {
+                parentContainer.classList.add('collapsed');
+                parentHeader.querySelector('.arrow')?.classList.remove('expanded');
+
+                // 상위 접힘 시 하위도 모두 접기(정리)
+                parentContainer.querySelectorAll('.nav-subgroup-container').forEach(el => el.classList.add('collapsed'));
+                parentContainer.querySelectorAll('.nav-subcategory .arrow').forEach(a => a.classList.remove('expanded'));
+            }
+        };
+
+        nav.appendChild(parentHeader);
+        nav.appendChild(parentContainer);
     }
+}
 
-    function setActiveNavById(id) {
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        const el = NAV_ITEM_MAP.get(id);
-        if(el) {
-            el.classList.add('active');
-            el.scrollIntoView({ block: "nearest" });
+function expandParent(parentName) {
+    const sel = cssEsc(parentName);
+    const group = nav.querySelector(`.nav-group-container[data-parent="${sel}"]`);
+    const header = nav.querySelector(`.nav-category[data-parent="${sel}"]`);
+    if(group && header) {
+        group.classList.remove('collapsed');
+        header.querySelector('.arrow')?.classList.add('expanded');
+    }
+}
+
+function expandChild(parentName, childName) {
+    const p = cssEsc(parentName);
+    const c = cssEsc(childName);
+    const group = nav.querySelector(`.nav-subgroup-container[data-parent="${p}"][data-child="${c}"]`);
+    const header = nav.querySelector(`.nav-subcategory[data-parent="${p}"][data-child="${c}"]`);
+    if(group && header) {
+        group.classList.remove('collapsed');
+        header.querySelector('.arrow')?.classList.add('expanded');
+    }
+}
+
+function activateNavByKey(key) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const el = nav.querySelector(`.nav-item[data-key="${cssEsc(key)}"]`);
+    if(el) {
+        el.classList.add('active');
+
+        const parentName = el.dataset.parent || (el.dataset.cat || 'Others');
+        const childName = el.dataset.child || '';
+
+        expandParent(parentName);
+        if(childName) expandChild(parentName, childName);
+
+        el.scrollIntoView({ block: 'nearest' });
+    }
+}
+
+    // ----------------------------
+    // 상세 보기 (기존 로직 유지)
+    // ----------------------------
+    function showDetail(item) {
+        let html = `<div class="content-card fade-in">
+                    <div style="margin-bottom:20px;">
+                        <h1 style="color:${getColor(item.color)}">${escapeHtml(item.title)}</h1>
+                        <div class="sub-title">${escapeHtml(item.sub || item.cat || '')}</div>
+                    </div>`;
+
+        if(item.stats) {
+            html += `<div class="stats-grid">`;
+            for(let [k,v] of Object.entries(item.stats)) {
+                html += `<div class="stat-item"><span style="color:#666;font-size:0.8rem;">${escapeHtml(k)}</span><div class="stat-val">${escapeHtml(v)}</div></div>`;
+            }
+            html += `</div>`;
         }
+
+        if(item.data) {
+            if(item.desc) html += `<p style="color:#aaa; margin-bottom:20px;">${item.desc}</p>`;
+            item.data.forEach(d => {
+                let qText = String(d.q || '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                let aText = String(d.a || '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                html += `<div class="detail-block">
+                            <h3 style="color:#fff;">Q. ${qText}</h3>
+                            <p style="color:#bbb; margin-top:5px;">A. ${aText}</p>
+                         </div>`;
+            });
+        } else if(item.details) {
+            item.details.forEach(d => {
+                let tText = String(d.t || '').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                html += `<div class="detail-block"><h3>${escapeHtml(d.h || '')}</h3><p>${tText}</p></div>`;
+            });
+        }
+
+        html += `</div>`;
+        main.innerHTML = html;
     }
 
-    function renderSearchResults(query, results) {
-        const qTokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+    // ----------------------------
+    // 통합 검색: 전체 내용 검색 → 오른쪽에 결과 출력
+    // ----------------------------
+    
+let SEARCH_INDEX = [];
+function buildSearchIndex() {
+    SEARCH_INDEX = DATABASE.map(item => {
+        const p = parseCategory(item.cat);
+        return {
+            item,
+            key: makeKey(item),
+            parent: p.parent,
+            child: p.child || '',
+            catLabel: formatCategoryLabel(item.cat),
+            title: item.title || '',
+            text: itemToSearchText(item),
+            lc: '' // lazy
+        };
+    });
+}
 
-        const header = `
-            <div class="search-header">
-                검색어: <b>${escapeHtml(query)}</b> · 결과: <b>${results.length}</b>개
+    function renderSearchResults(keyword, results) {
+        const k = keyword.trim();
+        if(!k) { showHome(); return; }
+
+        const cards = results.map(r => {
+            const ex = excerpt(r.text, k);
+            return `
+                <div class="search-result" data-k="${r.key}">
+                    <div class="search-result-title">${highlightHtml(r.title, k)}</div>
+                    <div class="search-result-meta">${escapeHtml(r.catLabel)}</div>
+                    <div class="search-result-excerpt">${highlightHtml(ex, k)}</div>
+                </div>
+            `;
+        }).join('');
+
+        main.innerHTML = `
+            <div class="search-results">
+                <div class="search-header">검색어: <b>${escapeHtml(k)}</b> / 결과: ${results.length}개</div>
+                ${cards || '<div style="color:#666; padding:10px 0;">검색 결과가 없습니다.</div>'}
             </div>
         `;
 
-        const cards = results.map(({item, text}) => {
-            const excerpt = makeExcerpt(text, qTokens);
-            return `
-                <div class="search-item-card" data-id="${escapeHtml(item.id || '')}">
-                    <div class="search-item-title" style="color:${getColor(item.color)}">${highlightHtml(item.title || "", qTokens)}</div>
-                    <div class="search-item-meta">${escapeHtml(item.cat || "")}${item.sub ? " · " + escapeHtml(item.sub) : ""}</div>
-                    <div class="search-item-excerpt">${highlightHtml(excerpt, qTokens)}</div>
-                </div>
-            `;
-        }).join("");
-
-        main.innerHTML = header + `<div class="search-list">${cards}</div>`;
-
-        main.querySelectorAll(".search-item-card").forEach(card => {
-            card.addEventListener("click", () => {
-                const id = card.getAttribute("data-id");
-                const found = DATABASE.find(x => (x.id || "") === id);
-                if(found) {
-                    showDetail(found);
-                    if(id) setActiveNavById(id);
-                }
+        main.querySelectorAll('.search-result').forEach(el => {
+            el.addEventListener('click', () => {
+                const key = el.getAttribute('data-k');
+                const rec = SEARCH_INDEX.find(x => x.key === key);
+                if(!rec) return;
+                activateNavByKey(key);
+                showDetail(rec.item);
             });
         });
-
-        if(window.innerWidth <= 768) main.scrollTop = 0;
     }
 
-    function searchAll(keywordRaw) {
-        const keyword = (keywordRaw || "").trim();
-        if(!keyword) {
-            main.innerHTML = DEFAULT_MAIN_HTML;
-            return;
+    function runSearch(keyword) {
+        const k = (keyword || '').trim();
+        if(!k) { showHome(); return; }
+
+        const kl = k.toLowerCase();
+        const results = [];
+        for(const r of SEARCH_INDEX) {
+            if(!r.lc) r.lc = (r.title + '\n' + r.text).toLowerCase();
+            if(r.lc.includes(kl)) results.push(r);
         }
-
-        const tokens = keyword.toLowerCase().split(/\s+/).filter(Boolean);
-        const results = SEARCH_INDEX.filter(x => tokens.every(t => x.lc.includes(t)));
-
-        renderSearchResults(keyword, results);
+        renderSearchResults(k, results);
     }
+
+    // ----------------------------
+    // 이벤트
+    // ----------------------------
+    // 기존 에러 표시 영역을 홈 화면에서 재사용하기 위해 HTML 저장
+    window.__OP_LOAD_ERRORS_HTML__ = (typeof errorContainer !== 'undefined' && errorContainer)
+        ? errorContainer.innerHTML
+        : '';
 
     searchInput.addEventListener('input', (e) => {
-        searchAll(e.target.value);
+        runSearch(e.target.value);
     });
 
+    // 초기 렌더
     renderNav(DATABASE);
+    buildSearchIndex();
+    showHome();
 
 </script>
 </body>
